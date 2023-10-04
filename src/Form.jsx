@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Card, LoadingOverlay, Image, Text, Badge, Button, Group, Textarea, FileInput, Radio, CheckIcon } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { IKContext, IKImage, IKUpload } from 'imagekitio-react';
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 
 
 
@@ -17,13 +17,14 @@ export default function Form() {
   const [goodMeal, setGoodMeal] = useState('Yes')
   const [loading, setLoading] = useState(false)
   const [base64String, setBase64String] = useState(null)
-
+  const inputRef = useRef(null)
 
   const onClickSave = async (e) => {
     setLoading(true)
     const today = date
     const formattedDate = formatDateToDDMMYYYY(today);
     let respondImage
+    let base64String
     const temp = {
       no: '+ROW()-1',
       date: formattedDate,
@@ -32,16 +33,23 @@ export default function Form() {
       good_meal: goodMeal,
     }
 
-    if (base64String) {
-      const formData = new FormData();
-      formData.append('key', imgBBKey);
-      formData.append('image', base64String);
-      formData.append('expiration', 0)
-      respondImage = await axios.post(`https://api.imgbb.com/1/upload`, formData)
-      console.log('respond', respondImage.data.data.display_url);
-      temp.picture = respondImage.data.data.display_url
+    console.log('file', inputRef.current.files[0]);
+    // const reader = new FileReader();
+    // reader.onload = (e) => {
+    //   const base64 = e.target.result.split('data:image/png;base64,')[1] ?? '';
+    //   // setBase64String(base64); // Set the Base64 string
+    //   alert(base64)
+    // };
+    // if (base64String) {
+    const formData = new FormData();
+    formData.append('key', imgBBKey);
+    formData.append('image', inputRef.current.files[0]);
+    formData.append('expiration', 0)
+    respondImage = await axios.post(`https://api.imgbb.com/1/upload`, formData)
+    console.log('respond', respondImage.data.data.display_url);
+    temp.picture = respondImage.data.data.display_url
 
-    }
+    // }
 
 
     const res = await axios.post(sheetUrl, temp)
@@ -60,16 +68,19 @@ export default function Form() {
 
 
   const handleImageChange = (e) => {
+    console.log('e ', e);
+    alert('hi ')
+
     const file = e.target.files[0];
+    // alert('ok')
 
     if (file) {
       const reader = new FileReader();
-
+      alert('ok')
       reader.onload = (e) => {
         const base64 = e.target.result.split('data:image/png;base64,')[1] ?? '';
-
         setBase64String(base64); // Set the Base64 string
-
+        alert(base64)
       };
 
       reader.readAsDataURL(file);
@@ -121,8 +132,33 @@ export default function Form() {
             placeholder="อธิบายคราวๆ อาหาร"
           />
         </div>
+        {/* <Button
+          className="bg-[#099268] text-[#fff] border-0"
+          variant="gradient"
+          gradient={{ from: 'gray', to: 'gray', deg: 90 }}
+          onClick={() => inputRef.current.click()}
+        >
+          Upload
+        </Button> */}
 
-        <input type="file" onChange={handleImageChange} />
+
+        {/* <FileInput
+          label="Input label"
+          description="Input description"
+          placeholder="Input placeholder"
+          onChange={handleImageChange}
+        /> */}
+
+        <input
+          // onInput={handleImageChange}
+          name="inputFile"
+          className=""
+          ref={inputRef}
+          id="fileInput"
+          type="file"
+          accept="image/*"
+        // onChange={handleImageChange}
+        />
 
         <div className="flex gap-2">
           <Radio icon={CheckIcon} label="✅ Good meal" name="check" value="Yes" defaultChecked onChange={(e) => setGoodMeal(e.target.value)} />
