@@ -39,8 +39,10 @@ export default function Form() {
       formData.append('expiration', 0)
       respondImage = await axios.post(`https://api.imgbb.com/1/upload`, formData)
       console.log('respond', respondImage.data.data.display_url);
+      temp.picture = respondImage.data.data.display_url
+
     }
-    temp.picture = respondImage.data.data.display_url
+
 
     const res = await axios.post(sheetUrl, temp)
 
